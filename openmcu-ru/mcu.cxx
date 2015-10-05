@@ -1044,11 +1044,7 @@ BOOL OpenMCU::OTFControl(const PStringToString & data, PString & rdata)
     else HttpWriteCmdRoom("tpllck(0)",room);
     return TRUE;
   }
-  if(action == OTFC_INVITE)
-  {
-    action = OTFC_ADD_AND_INVITE;
-  }
-  if(action == OTFC_ADD_AND_INVITE)
+  if(action == OTFC_INVITE || action == OTFC_ADD_AND_INVITE)
   {
     PString memberName = value;
     ConferenceMember *member = manager->FindMemberSimilarWithLock(conference, memberName);
@@ -1442,7 +1438,10 @@ BOOL OpenMCU::OTFControl(const PStringToString & data, PString & rdata)
         }
       }
       if(setup == FALSE)
+      {
+        if(type==1) type++;
         mixer->PositionSetup(pos,type,NULL);
+      }
     }
 //    else if((id>=0)&&(id<100))
 //      mixer->PositionSetup(pos,type,NULL);
@@ -1503,6 +1502,7 @@ BOOL OpenMCU::OTFControl(const PStringToString & data, PString & rdata)
     member->kManualGain=(float)pow(10.0,((float)member->kManualGainDB)/20.0);
     cmd << "setagl(" << v << "," << member->kManualGainDB << ")";
     HttpWriteCmdRoom(cmd,room);
+    SaveParameterByURL("Input Gain", MCUURL(member->GetName()).GetUrl(), member->kManualGainDB);
     return TRUE;
   }
   if( action == OTFC_OUTPUT_GAIN_SET )
@@ -1514,6 +1514,7 @@ BOOL OpenMCU::OTFControl(const PStringToString & data, PString & rdata)
     member->kOutputGain=(float)pow(10.0,((float)member->kOutputGainDB)/20.0);
     cmd << "setogl(" << v << "," << member->kOutputGainDB << ")";
     HttpWriteCmdRoom(cmd,room);
+    SaveParameterByURL("Output Gain", MCUURL(member->GetName()).GetUrl(), member->kOutputGainDB);
     return TRUE;
   }
   if(action == OTFC_MUTE)

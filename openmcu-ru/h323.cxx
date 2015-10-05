@@ -2173,6 +2173,25 @@ void MCUH323Connection::JoinConference(const PString & roomToJoin)
       conferenceMember = new MCUConnection_ConferenceMember(conference, memberName, callToken, isMCU);
   }
 
+  { // restore input & output gain level
+    PString gain;
+
+    gain = GetSectionParamFromUrl("Input Gain", MCUURL(conferenceMember->GetName()).GetUrl(), false);
+    if(!gain.IsEmpty())
+    {
+      conferenceMember->kManualGainDB = gain.AsInteger();
+      conferenceMember->kManualGain=(float)pow(10.0,((float)conferenceMember->kManualGainDB)/20.0);
+    }
+
+    gain = GetSectionParamFromUrl("Output Gain", MCUURL(conferenceMember->GetName()).GetUrl(), false);
+    if(!gain.IsEmpty())
+    {
+      conferenceMember->kOutputGainDB = gain.AsInteger();
+      conferenceMember->kOutputGain=(float)pow(10.0,((float)conferenceMember->kOutputGainDB)/20.0);
+    }
+  }
+
+
   conference->AddMember(conferenceMember);
   conference->Unlock();
 }
@@ -3616,11 +3635,23 @@ MCUConnection_ConferenceMember::MCUConnection_ConferenceMember(Conference * _con
 {
   memberType = MEMBER_TYPE_CONN;
   callToken = _callToken;
-//  if(callToken != "")
-    visible = TRUE;
+  visible = TRUE;
   isMCU = _isMCU;
   MCUURL url(_memberName);
-  name = url.GetMemberName();
+
+    // quick fix for URL parameters, http://openmcu.ru/forum/index.php?topic=1086.msg14951#msg14951
+    PString query, name0;
+    name0 = url.GetMemberName();
+    PINDEX n = _memberName.Find('?');
+    if(n!=P_MAX_INDEX) query=_memberName.Mid(n, P_MAX_INDEX);
+    if(name0.Right(1) == "]")
+    {
+      name0=name0.Left(name0.GetLength()-1);
+      query += "]";
+    }
+    name = name0 + query;
+
+//  name = url.GetMemberName();
   nameID = url.GetMemberNameId();
 }
 
